@@ -68,98 +68,98 @@ UART_HandleTypeDef huart2;
 osThreadId_t defaultTaskHandle;
 const osThreadAttr_t defaultTask_attributes = {
   .name = "defaultTask",
-  .stack_size = 1024 * 4,
+  .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
 /* Definitions for TaskBlinky */
 osThreadId_t TaskBlinkyHandle;
 const osThreadAttr_t TaskBlinky_attributes = {
   .name = "TaskBlinky",
-  .stack_size = 1024 * 4,
+  .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityLow,
 };
 /* Definitions for TaskTrace */
 osThreadId_t TaskTraceHandle;
 const osThreadAttr_t TaskTrace_attributes = {
   .name = "TaskTrace",
-  .stack_size = 1024 * 4,
+  .stack_size = 512 * 4,
   .priority = (osPriority_t) osPriorityLow,
 };
 /* Definitions for TaskDispecer */
 osThreadId_t TaskDispecerHandle;
 const osThreadAttr_t TaskDispecer_attributes = {
   .name = "TaskDispecer",
-  .stack_size = 1024 * 4,
+  .stack_size = 512 * 4,
   .priority = (osPriority_t) osPriorityLow,
 };
 /* Definitions for TaskRadioComms */
 osThreadId_t TaskRadioCommsHandle;
 const osThreadAttr_t TaskRadioComms_attributes = {
   .name = "TaskRadioComms",
-  .stack_size = 1024 * 4,
+  .stack_size = 512 * 4,
   .priority = (osPriority_t) osPriorityLow,
 };
 /* Definitions for d2 */
 osThreadId_t d2Handle;
 const osThreadAttr_t d2_attributes = {
   .name = "d2",
-  .stack_size = 1024 * 4,
+  .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityLow,
 };
 /* Definitions for d3 */
 osThreadId_t d3Handle;
 const osThreadAttr_t d3_attributes = {
   .name = "d3",
-  .stack_size = 1024 * 4,
+  .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityLow,
 };
 /* Definitions for d4 */
 osThreadId_t d4Handle;
 const osThreadAttr_t d4_attributes = {
   .name = "d4",
-  .stack_size = 1024 * 4,
+  .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityLow,
 };
 /* Definitions for d5 */
 osThreadId_t d5Handle;
 const osThreadAttr_t d5_attributes = {
   .name = "d5",
-  .stack_size = 1024 * 4,
+  .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityLow,
 };
 /* Definitions for d6 */
 osThreadId_t d6Handle;
 const osThreadAttr_t d6_attributes = {
   .name = "d6",
-  .stack_size = 1024 * 4,
+  .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityLow,
 };
 /* Definitions for TaskHwI2c */
 osThreadId_t TaskHwI2cHandle;
 const osThreadAttr_t TaskHwI2c_attributes = {
   .name = "TaskHwI2c",
-  .stack_size = 1024 * 4,
+  .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityLow,
 };
 /* Definitions for TaskHwSpi */
 osThreadId_t TaskHwSpiHandle;
 const osThreadAttr_t TaskHwSpi_attributes = {
   .name = "TaskHwSpi",
-  .stack_size = 1024 * 4,
+  .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityLow,
 };
 /* Definitions for TaskDigitalIn */
 osThreadId_t TaskDigitalInHandle;
 const osThreadAttr_t TaskDigitalIn_attributes = {
   .name = "TaskDigitalIn",
-  .stack_size = 1024 * 4,
+  .stack_size = 512 * 4,
   .priority = (osPriority_t) osPriorityLow,
 };
 /* Definitions for TaskAnalogIn */
 osThreadId_t TaskAnalogInHandle;
 const osThreadAttr_t TaskAnalogIn_attributes = {
   .name = "TaskAnalogIn",
-  .stack_size = 1024 * 4,
+  .stack_size = 512 * 4,
   .priority = (osPriority_t) osPriorityLow,
 };
 /* Definitions for qTrace */
@@ -246,6 +246,17 @@ typedef enum {									// enum je potreban sa switch case
 	evtflg_SPARE3_TRIGGER =			(1 << 14),
 	evtflg_SPARE4_TRIGGER =			(1 << 15),
 } Flegovi_t;
+
+typedef enum {
+	Din0 = 0,
+	Din1 = 1,
+	Din2 = 2,
+	Din3 = 3,
+	Din4 = 4,
+	Din5 = 5,
+	Din6 = 6,
+	Din7 = 7,
+} ExtiPosition_t;
 
 
 /* USER CODE END PV */
@@ -346,13 +357,13 @@ int main(void)
 
   /* Create the queue(s) */
   /* creation of qTrace */
-  qTraceHandle = osMessageQueueNew (32, sizeof(TRACE_MESSAGE_STRUCT), &qTrace_attributes);
+  qTraceHandle = osMessageQueueNew (64, sizeof(TRACE_MESSAGE_STRUCT), &qTrace_attributes);
 
   /* creation of qRadioTx */
-  qRadioTxHandle = osMessageQueueNew (64, sizeof(uint32_t), &qRadioTx_attributes);
+  qRadioTxHandle = osMessageQueueNew (64, 128, &qRadioTx_attributes);
 
   /* creation of qRadioRx */
-  qRadioRxHandle = osMessageQueueNew (64, sizeof(uint32_t), &qRadioRx_attributes);
+  qRadioRxHandle = osMessageQueueNew (16, 128, &qRadioRx_attributes);
 
   /* creation of qRadioFwd */
   qRadioFwdHandle = osMessageQueueNew (64, sizeof(uint32_t), &qRadioFwd_attributes);
@@ -837,7 +848,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(BOARD_LED0_GPIO_Port, BOARD_LED0_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, KBD_o1_Pin|KBD_o2_Pin|KBD_o3_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, KBD_o0_Pin|KBD_o1_Pin|KBD_o2_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : BOARD_LED0_Pin */
   GPIO_InitStruct.Pin = BOARD_LED0_Pin;
@@ -846,21 +857,21 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(BOARD_LED0_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : Exti_d1_BOARD_KEY0_Pin Exti_d2_Pin Exti_d3_Pin */
-  GPIO_InitStruct.Pin = Exti_d1_BOARD_KEY0_Pin|Exti_d2_Pin|Exti_d3_Pin;
+  /*Configure GPIO pins : Exti_d0_BOARD_KEY0_Pin Exti_d1_Pin Exti_d2_Pin */
+  GPIO_InitStruct.Pin = Exti_d0_BOARD_KEY0_Pin|Exti_d1_Pin|Exti_d2_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : KBD_o1_Pin KBD_o2_Pin KBD_o3_Pin */
-  GPIO_InitStruct.Pin = KBD_o1_Pin|KBD_o2_Pin|KBD_o3_Pin;
+  /*Configure GPIO pins : KBD_o0_Pin KBD_o1_Pin KBD_o2_Pin */
+  GPIO_InitStruct.Pin = KBD_o0_Pin|KBD_o1_Pin|KBD_o2_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : KBD_i3_Pin KBD_i4_Pin KBD_i1_Pin KBD_i2_Pin */
-  GPIO_InitStruct.Pin = KBD_i3_Pin|KBD_i4_Pin|KBD_i1_Pin|KBD_i2_Pin;
+  /*Configure GPIO pins : KBD_i2_Pin KBD_i3_Pin KBD_i0_Pin KBD_i1_Pin */
+  GPIO_InitStruct.Pin = KBD_i2_Pin|KBD_i3_Pin|KBD_i0_Pin|KBD_i1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
@@ -1221,7 +1232,7 @@ void d6start(void *argument)
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1000);
+    osDelay(30000);
   }
   /* USER CODE END d6start */
 }
@@ -1296,9 +1307,9 @@ void startTaskDigitalIn(void *argument)
 				// procitam vrednosti i posaljem u measurement set
 				extPinovi = 0;
 				// 1 << (Exti_d2_Pin>>1)  zato sto gpio pinovi u hal-u idu od 1..32 a meni treba shiftofanje 0..31 puta
-				if ( HAL_GPIO_ReadPin(Exti_d1_BOARD_KEY0_GPIO_Port, Exti_d1_BOARD_KEY0_Pin) == GPIO_PIN_SET) { extPinovi |= ( 1 << (Exti_d1_BOARD_KEY0_Pin>>1) ); };
-				if ( HAL_GPIO_ReadPin(Exti_d2_GPIO_Port, Exti_d2_Pin) 						== GPIO_PIN_SET) { extPinovi |= ( 1 << (Exti_d2_Pin>>1) ); }
-				if ( HAL_GPIO_ReadPin(Exti_d3_GPIO_Port, Exti_d3_Pin) 						== GPIO_PIN_SET) { extPinovi |= ( 1 << (Exti_d3_Pin>>1) ); }
+				if ( HAL_GPIO_ReadPin(Exti_d0_BOARD_KEY0_GPIO_Port, Exti_d0_BOARD_KEY0_Pin) == GPIO_PIN_SET) { extPinovi |= ( 1 << Din0 ); };
+				if ( HAL_GPIO_ReadPin(Exti_d1_GPIO_Port, Exti_d1_Pin) 						== GPIO_PIN_SET) { extPinovi |= ( 1 << Din1 ); };
+				if ( HAL_GPIO_ReadPin(Exti_d2_GPIO_Port, Exti_d2_Pin) 						== GPIO_PIN_SET) { extPinovi |= ( 1 << Din2 ); };
 
 				setDigitalResult(extPinovi);
 				char bintostr[5];
@@ -1354,8 +1365,7 @@ void startTaskAnalogIn(void *argument)
 
 			case flg_ADC_CONV_CPLT_IRQ:
 				// ADC_DMA transfer je zavrsen
-				bool desioSeTrig;
-				desioSeTrig = false;		// FREEZE: ovde setujem varijablu a tek na kraju SAMO JEDNOM SETUJEM thread flag
+				bool desioSeTrig = desioSeTrig = false;		// FREEZE: ovde setujem varijablu a tek na kraju SAMO JEDNOM SETUJEM thread flag
 				for (uint32_t i = 0; i < hadc1.Init.NbrOfConversion; i++) {
 					setAnalogResult(i, AD_REZULT_izDMA[i]);
 
@@ -1387,12 +1397,12 @@ void startTaskAnalogIn(void *argument)
 
 				if (desioSeTrig) {
 					// ostavi poruku i signaliziraj trigger
-					snprintf(msg.txt, sizeof(msg.txt), "%s, %lu, %lu, %lu, %lu", adc_triggered, AD_REZULT_izDMA[0], AD_REZULT_izDMA[1], AD_REZULT_izDMA[2], AD_REZULT_izDMA[3]);
+					snprintf(msg.txt, sizeof(msg.txt), "%s, %u, %u, %u, %u", adc_triggered, AD_REZULT_izDMA[0], AD_REZULT_izDMA[1], AD_REZULT_izDMA[2], AD_REZULT_izDMA[3]);
 					tracePrint1s(qTraceHandle, dbg_3, msg.txt);
 					osEventFlagsSet(EvtTriggersHandle, flg_ANALOG_TRIGGERED);
 				} else {
 					// nije bio trigger
-					snprintf(msg.txt, sizeof(msg.txt), "%s, %lu, %lu, %lu, %lu", adc_not_triggered, AD_REZULT_izDMA[0], AD_REZULT_izDMA[1], AD_REZULT_izDMA[2], AD_REZULT_izDMA[3]);
+					snprintf(msg.txt, sizeof(msg.txt), "%s, %u, %u, %u, %u", adc_not_triggered, AD_REZULT_izDMA[0], AD_REZULT_izDMA[1], AD_REZULT_izDMA[2], AD_REZULT_izDMA[3]);
 					tracePrint1s(qTraceHandle, dbg_6, msg.txt);
 					osEventFlagsClear(EvtTriggersHandle, flg_ANALOG_TRIGGERED);
 				}
