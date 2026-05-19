@@ -99,10 +99,10 @@ const osThreadAttr_t TaskRadioComms_attributes = {
   .stack_size = 512 * 4,
   .priority = (osPriority_t) osPriorityLow,
 };
-/* Definitions for d2 */
-osThreadId_t d2Handle;
-const osThreadAttr_t d2_attributes = {
-  .name = "d2",
+/* Definitions for TaskID */
+osThreadId_t TaskIDHandle;
+const osThreadAttr_t TaskID_attributes = {
+  .name = "TaskID",
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityLow,
 };
@@ -248,14 +248,14 @@ typedef enum {									// enum je potreban sa switch case
 } Flegovi_t;
 
 typedef enum {
-	Din0 = 0,
-	Din1 = 1,
-	Din2 = 2,
-	Din3 = 3,
-	Din4 = 4,
-	Din5 = 5,
-	Din6 = 6,
-	Din7 = 7,
+	bit0 = 0,
+	bit1 = 1,
+	bit2 = 2,
+	bit3 = 3,
+	bit4 = 4,
+	bit5 = 5,
+	bit6 = 6,
+	bit7 = 7,
 } ExtiPosition_t;
 
 
@@ -277,7 +277,7 @@ void startTaskBlinky(void *argument);
 void startTaskTrace(void *argument);
 void startTaskDispecer(void *argument);
 void startTaskRadioComms(void *argument);
-void d2start(void *argument);
+void startTaskID(void *argument);
 void d3start(void *argument);
 void d4start(void *argument);
 void d5start(void *argument);
@@ -388,8 +388,8 @@ int main(void)
   /* creation of TaskRadioComms */
   TaskRadioCommsHandle = osThreadNew(startTaskRadioComms, NULL, &TaskRadioComms_attributes);
 
-  /* creation of d2 */
-  d2Handle = osThreadNew(d2start, NULL, &d2_attributes);
+  /* creation of TaskID */
+  TaskIDHandle = osThreadNew(startTaskID, NULL, &TaskID_attributes);
 
   /* creation of d3 */
   d3Handle = osThreadNew(d3start, NULL, &d3_attributes);
@@ -1147,22 +1147,72 @@ void startTaskRadioComms(void *argument)
   /* USER CODE END startTaskRadioComms */
 }
 
-/* USER CODE BEGIN Header_d2start */
+/* USER CODE BEGIN Header_startTaskID */
 /**
-* @brief Function implementing the d2 thread.
+* @brief Function implementing the TaskID thread.
 * @param argument: Not used
 * @retval None
 */
-/* USER CODE END Header_d2start */
-void d2start(void *argument)
-{
-  /* USER CODE BEGIN d2start */
-  /* Infinite loop */
-  for(;;)
-  {
-    osDelay(1000);
-  }
-  /* USER CODE END d2start */
+/* USER CODE END Header_startTaskID */
+void startTaskID(void *argument) {
+	/* USER CODE BEGIN startTaskID */
+	uint32_t id0 = 0;
+	uint32_t id1 = 0;
+	uint32_t id2 = 0;
+	// ovo dodje kao neki template
+	// osEventFlagsWait(EvtGlobalRunStopHandle, flg_DIGITAL_ENABLED, osFlagsWaitAll, osWaitForever);
+	// INIT_DIGITAL_INPUTS();	// TODO neki timeout
+	// osEventFlagsSet(EvtTaskHealthHandle, flg_DIGITAL_ENABLED);
+	// tracePrint1s(qTraceHandle, dbg_3, dig_running);
+	/* Infinite loop */
+	for (;;) {
+		id0 = 0;
+		id1 = 0;
+		id2 = 0;
+		HAL_GPIO_WritePin(KBD_o0_GPIO_Port, KBD_o0_Pin, GPIO_PIN_SET);
+		HAL_GPIO_WritePin(KBD_o1_GPIO_Port, KBD_o1_Pin, GPIO_PIN_SET);
+		HAL_GPIO_WritePin(KBD_o2_GPIO_Port, KBD_o2_Pin, GPIO_PIN_SET);
+
+		// PRVA cifra
+		HAL_GPIO_WritePin(KBD_o0_GPIO_Port, KBD_o0_Pin, GPIO_PIN_RESET);
+		osDelay(20);
+		//i am  1 << (Exti_d2_Pin>>1)  zato sto gpio pinovi u hal-u idu od 1..32 a meni treba shiftofanje 0..31 puta
+		if (HAL_GPIO_ReadPin(KBD_i0_GPIO_Port, KBD_i0_Pin) == GPIO_PIN_SET) { id0 |= (1 << bit0); };
+		if (HAL_GPIO_ReadPin(KBD_i1_GPIO_Port, KBD_i1_Pin) == GPIO_PIN_SET) { id0 |= (1 << bit1); };
+		if (HAL_GPIO_ReadPin(KBD_i2_GPIO_Port, KBD_i2_Pin) == GPIO_PIN_SET) { id0 |= (1 << bit2); };
+		if (HAL_GPIO_ReadPin(KBD_i3_GPIO_Port, KBD_i3_Pin) == GPIO_PIN_SET) { id0 |= (1 << bit3); };
+
+		// DRUGA cifra
+		HAL_GPIO_WritePin(KBD_o0_GPIO_Port, KBD_o0_Pin, GPIO_PIN_SET);
+		HAL_GPIO_WritePin(KBD_o1_GPIO_Port, KBD_o1_Pin, GPIO_PIN_SET);
+		HAL_GPIO_WritePin(KBD_o2_GPIO_Port, KBD_o2_Pin, GPIO_PIN_SET);
+
+		HAL_GPIO_WritePin(KBD_o1_GPIO_Port, KBD_o1_Pin, GPIO_PIN_RESET);
+		osDelay(20);
+		//i am  1 << (Exti_d2_Pin>>1)  zato sto gpio pinovi u hal-u idu od 1..32 a meni treba shiftofanje 0..31 puta
+		if (HAL_GPIO_ReadPin(KBD_i0_GPIO_Port, KBD_i0_Pin) == GPIO_PIN_SET) { id1 |= (1 << bit0); };
+		if (HAL_GPIO_ReadPin(KBD_i1_GPIO_Port, KBD_i1_Pin) == GPIO_PIN_SET) { id1 |= (1 << bit1); };
+		if (HAL_GPIO_ReadPin(KBD_i2_GPIO_Port, KBD_i2_Pin) == GPIO_PIN_SET) { id1 |= (1 << bit2); };
+		if (HAL_GPIO_ReadPin(KBD_i3_GPIO_Port, KBD_i3_Pin) == GPIO_PIN_SET) { id1 |= (1 << bit3); };
+
+		// TRECA cifra
+		HAL_GPIO_WritePin(KBD_o0_GPIO_Port, KBD_o0_Pin, GPIO_PIN_SET);
+		HAL_GPIO_WritePin(KBD_o1_GPIO_Port, KBD_o1_Pin, GPIO_PIN_SET);
+		HAL_GPIO_WritePin(KBD_o2_GPIO_Port, KBD_o2_Pin, GPIO_PIN_SET);
+
+		HAL_GPIO_WritePin(KBD_o2_GPIO_Port, KBD_o2_Pin, GPIO_PIN_RESET);
+		osDelay(20);
+		//i am  1 << (Exti_d2_Pin>>1)  zato sto gpio pinovi u hal-u idu od 1..32 a meni treba shiftofanje 0..31 puta
+		if (HAL_GPIO_ReadPin(KBD_i0_GPIO_Port, KBD_i0_Pin) == GPIO_PIN_SET) { id2 |= (1 << bit0); };
+		if (HAL_GPIO_ReadPin(KBD_i1_GPIO_Port, KBD_i1_Pin) == GPIO_PIN_SET) { id2 |= (1 << bit1); };
+		if (HAL_GPIO_ReadPin(KBD_i2_GPIO_Port, KBD_i2_Pin) == GPIO_PIN_SET) { id2 |= (1 << bit2); };
+		if (HAL_GPIO_ReadPin(KBD_i3_GPIO_Port, KBD_i3_Pin) == GPIO_PIN_SET) { id2 |= (1 << bit3); };
+
+		setUID(id0, id1, id2);
+
+		osDelay(10000);
+	}
+	/* USER CODE END startTaskID */
 }
 
 /* USER CODE BEGIN Header_d3start */
@@ -1307,9 +1357,9 @@ void startTaskDigitalIn(void *argument)
 				// procitam vrednosti i posaljem u measurement set
 				extPinovi = 0;
 				// 1 << (Exti_d2_Pin>>1)  zato sto gpio pinovi u hal-u idu od 1..32 a meni treba shiftofanje 0..31 puta
-				if ( HAL_GPIO_ReadPin(Exti_d0_BOARD_KEY0_GPIO_Port, Exti_d0_BOARD_KEY0_Pin) == GPIO_PIN_SET) { extPinovi |= ( 1 << Din0 ); };
-				if ( HAL_GPIO_ReadPin(Exti_d1_GPIO_Port, Exti_d1_Pin) 						== GPIO_PIN_SET) { extPinovi |= ( 1 << Din1 ); };
-				if ( HAL_GPIO_ReadPin(Exti_d2_GPIO_Port, Exti_d2_Pin) 						== GPIO_PIN_SET) { extPinovi |= ( 1 << Din2 ); };
+				if ( HAL_GPIO_ReadPin(Exti_d0_BOARD_KEY0_GPIO_Port, Exti_d0_BOARD_KEY0_Pin) == GPIO_PIN_SET) { extPinovi |= ( 1 << bit0 ); };
+				if ( HAL_GPIO_ReadPin(Exti_d1_GPIO_Port, Exti_d1_Pin) 						== GPIO_PIN_SET) { extPinovi |= ( 1 << bit1 ); };
+				if ( HAL_GPIO_ReadPin(Exti_d2_GPIO_Port, Exti_d2_Pin) 						== GPIO_PIN_SET) { extPinovi |= ( 1 << bit2 ); };
 
 				setDigitalResult(extPinovi);
 				char bintostr[5];
@@ -1343,6 +1393,8 @@ void startTaskAnalogIn(void *argument)
   /* USER CODE BEGIN startTaskAnalogIn */
 	TraceMessage_t msg;
 	uint32_t AD_REZULT_izDMA[hadc1.Init.NbrOfConversion];
+	uint32_t ad_threshold[hadc1.Init.NbrOfConversion];
+	
 	const char adc_running[] =			"adc running";
 	const char adc_triggered[] = 		"adc done, triggered: yes";
 	const char adc_not_triggered[] = 	"adc done, triggered: no";

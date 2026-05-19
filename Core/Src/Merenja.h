@@ -5,6 +5,7 @@
 #ifndef ETVDAQ_MERENJA_H
 #define ETVDAQ_MERENJA_H
 
+
 typedef struct {
 	uint32_t measuredValue;
 
@@ -12,6 +13,13 @@ typedef struct {
 	int32_t alarmPolarity;			// -1=ALARM_ISPOD, 0=NO_ALARM, +1=alarm_IZNAD
 	uint32_t hysteresisValue;
 } ADinput_t;
+
+/*
+ * UID = Uredjaj ID
+ */
+void setUID(uint32_t u0, uint32_t u1, uint32_t u2);
+uint32_t getUID();
+
 
 /*
  * DIGITALNI ULAZI
