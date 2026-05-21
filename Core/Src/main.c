@@ -1393,11 +1393,14 @@ void startTaskAnalogIn(void *argument)
   /* USER CODE BEGIN startTaskAnalogIn */
 	TraceMessage_t msg;
 	uint32_t AD_REZULT_izDMA[hadc1.Init.NbrOfConversion];
-	uint32_t ad_threshold[hadc1.Init.NbrOfConversion];
-	
+	bool desioSeTrig[hadc1.Init.NbrOfConversion];
+	bool zbirniTrigger = false;
+	bool alreadyReported = false;
+
 	const char adc_running[] =			"adc running";
 	const char adc_triggered[] = 		"adc done, triggered: yes";
 	const char adc_not_triggered[] = 	"adc done, triggered: no";
+	const char adc_values[] = 			"adc values: ";
 
 	osEventFlagsWait(EvtGlobalRunStopHandle, flg_ANALOG_ENABLED, osFlagsWaitAll, osWaitForever);
 	INIT_ADC();	// TODO neki timeout
@@ -1417,7 +1420,6 @@ void startTaskAnalogIn(void *argument)
 
 			case flg_ADC_CONV_CPLT_IRQ:
 				// ADC_DMA transfer je zavrsen
-				bool desioSeTrig = desioSeTrig = false;		// FREEZE: ovde setujem varijablu a tek na kraju SAMO JEDNOM SETUJEM thread flag
 				for (uint32_t i = 0; i < hadc1.Init.NbrOfConversion; i++) {
 					setAnalogResult(i, AD_REZULT_izDMA[i]);
 
@@ -1425,29 +1427,48 @@ void startTaskAnalogIn(void *argument)
 					// ALARM_POLARITY > 0 => signaliziram prekoracenje IZNAD
 					if ( inputCfg.alarmPolarity > 0 ) {
 						if ( AD_REZULT_izDMA[i] > inputCfg.alarmThreshold ) {
-							desioSeTrig = true;
+							if (desioSeTrig[i] == false) {
+								desioSeTrig[i] = true;
+								alreadyReported = false;
+							}
 						} else if ( AD_REZULT_izDMA[i] <= (inputCfg.alarmThreshold - inputCfg.hysteresisValue) ) {
-							// FREEZE!!! NE DIRAJ desioSeTrig da ne ponistis vec postojeci true!
+							if (desioSeTrig[i] == true) {
+								desioSeTrig[i] = false;
+								alreadyReported = false;
+							}
 						}
 					}
 
 					// ALARM_POLARITY < 0 => signaliziram prekoracenje ISPOD
 					if ( inputCfg.alarmPolarity < 0) {
 						if (AD_REZULT_izDMA[i] < ( inputCfg.alarmThreshold ) ) {
-							desioSeTrig = true;
+							if (desioSeTrig[i] == false) {
+								desioSeTrig[i] = true;
+								alreadyReported = false;
+							}
 						} else if (AD_REZULT_izDMA[i] >= ( inputCfg.alarmThreshold + inputCfg.hysteresisValue) ) {
-							// FREEZE!!! NE DIRAJ desioSeTrig da ne ponistis vec postojeci true!
+							if (desioSeTrig[i] == true) {
+								desioSeTrig[i] = false;
+								alreadyReported = false;
+							}
 						}
 					}
 
 					// ALARM_POLARITY = 0 => Disable za taj ulaz. Samo merim i ne signaliziram nikom nista.
 					if ( inputCfg.alarmPolarity == 0) {
-						// za sada nista
+							desioSeTrig[i] = false;
 					}
 
 				}
 
-				if (desioSeTrig) {
+				zbirniTrigger = false;
+				for (int i = 0; i < hadc1.Init.NbrOfConversion; ++i) {
+					if (desioSeTrig[i] == true) {
+						zbirniTrigger = true;
+					}
+				}
+
+				if (zbirniTrigger == true) {
 					// ostavi poruku i signaliziraj trigger
 					snprintf(msg.txt, sizeof(msg.txt), "%s, %u, %u, %u, %u", adc_triggered, AD_REZULT_izDMA[0], AD_REZULT_izDMA[1], AD_REZULT_izDMA[2], AD_REZULT_izDMA[3]);
 					tracePrint1s(qTraceHandle, dbg_3, msg.txt);
@@ -1458,6 +1479,13 @@ void startTaskAnalogIn(void *argument)
 					tracePrint1s(qTraceHandle, dbg_6, msg.txt);
 					osEventFlagsClear(EvtTriggersHandle, flg_ANALOG_TRIGGERED);
 				}
+
+				if ( alreadyReported == false ){
+					snprintf(msg.txt, sizeof(msg.txt), "%s, %u, %u, %u, %u", adc_values, AD_REZULT_izDMA[0], AD_REZULT_izDMA[1], AD_REZULT_izDMA[2], AD_REZULT_izDMA[3]);
+					radioTx1s(qRadioTxHandle, msg.txt);
+					alreadyReported = true;
+				}
+
 				// konacno signaliziraj zavrseno merenje
 				osEventFlagsSet(EvtTriggersHandle, flg_ANALOG_PROCESSING_DONE);
 
