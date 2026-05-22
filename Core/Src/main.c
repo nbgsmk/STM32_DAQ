@@ -1101,14 +1101,14 @@ void startTaskRadioComms(void *argument)
 	/* Infinite loop */
 	for (;;) {
 		// cekam da neko zada start
-		cnt = osMessageQueueGetCount(qRadioRxHandle);
+		cnt = osMessageQueueGetCount(qRadioTxHandle);
 		if (cnt == 0) {
 			osDelay(1);
 			osThreadYield();	// nista nije stiglo, prepusti kontrolu
 		} else {
-			osDelay(1000);		// sacekaj jos neku poruku
+			osDelay(5000);		// sacekaj jos neku poruku
 			// radio on			// radio prepare and turn on
-			while (osOK == osMessageQueueGet(qRadioRxHandle, &rmsg, 0U, qWt) ) {
+			while (osOK == osMessageQueueGet(qRadioTxHandle, &rmsg, 0U, qWt) ) {
 				// transmit message for real
 				// osDelay(1);	// treba li pauza izmedju poruka?
 			}
@@ -1292,7 +1292,7 @@ void startTaskDigitalIn(void *argument)
 	INIT_DIGITAL_INPUTS();	// TODO neki timeout
 	osEventFlagsSet(EvtTaskHealthHandle, flg_DIGITAL_ENABLED);
 	tracePrint1s(qTraceHandle, dbg_3, dig_running);
-	radioTx1s(qRadioRxHandle, dig_running);
+	radioTx1s(qRadioTxHandle, dig_running);
 
 	/* Infinite loop */
 	for (;;) {
@@ -1321,7 +1321,7 @@ void startTaskDigitalIn(void *argument)
 
 				tracePrint1s(qTraceHandle, dbg_5, dig_complete);
 				osEventFlagsSet(EvtTriggersHandle, flg_DIGITAL_PROCESSING_DONE);				// signaliziram zavrsetak
-				radioTx2s2u(qRadioRxHandle, dig_trig, bintostr, extPinovi, 0);
+				radioTx2s2u(qRadioTxHandle, dig_trig, bintostr, extPinovi, 0);
 
 				break;
 		}
@@ -1341,11 +1341,18 @@ void startTaskDigitalIn(void *argument)
 void startTaskAnalogIn(void *argument)
 {
   /* USER CODE BEGIN startTaskAnalogIn */
-	TraceMessage_t msg;
+	TraceMessage_t tmsg;
+	RadioMessage_t rmsg;
+
+	bool adcTriggered = false;
 	uint32_t AD_REZULT_izDMA[hadc1.Init.NbrOfConversion];
-	const char adc_running[] =			"adc running";
-	const char adc_triggered[] = 		"adc done, triggered: yes";
-	const char adc_not_triggered[] = 	"adc done, triggered: no";
+	const char adc_running[] =				"adc running";
+	const char adc_triggered[] = 			"adc done, triggered: yes";
+	const char adc_not_triggered[] =		"adc done, triggered: no";
+
+	bool radioReported = false;
+	const char adc_trigg_txt_for_radio[] =	"adc triggered:";
+	const char adc_radio_reported[] = 	"adc radio report sent";
 
 	osEventFlagsWait(EvtGlobalRunStopHandle, flg_ANALOG_ENABLED, osFlagsWaitAll, osWaitForever);
 	INIT_ADC();	// TODO neki timeout
@@ -1365,7 +1372,7 @@ void startTaskAnalogIn(void *argument)
 
 			case flg_ADC_CONV_CPLT_IRQ:
 				// ADC_DMA transfer je zavrsen
-				bool desioSeTrig = desioSeTrig = false;		// FREEZE: ovde setujem varijablu a tek na kraju SAMO JEDNOM SETUJEM thread flag
+				adcTriggered = false;		// FREEZE: ovde setujem varijablu a tek na kraju SAMO JEDNOM SETUJEM thread flag
 				for (uint32_t i = 0; i < hadc1.Init.NbrOfConversion; i++) {
 					setAnalogResult(i, AD_REZULT_izDMA[i]);
 
@@ -1373,16 +1380,16 @@ void startTaskAnalogIn(void *argument)
 					// ALARM_POLARITY > 0 => signaliziram prekoracenje IZNAD
 					if ( inputCfg.alarmPolarity > 0 ) {
 						if ( AD_REZULT_izDMA[i] > inputCfg.alarmThreshold ) {
-							desioSeTrig = true;
+							adcTriggered = true;
 						} else if ( AD_REZULT_izDMA[i] <= (inputCfg.alarmThreshold - inputCfg.hysteresisValue) ) {
-							// FREEZE!!! NE DIRAJ desioSeTrig da ne ponistis vec postojeci true!
+							// FREEZE!!! NE DIRAJ adcTriggered da ne ponistis vec postojeci true!
 						}
 					}
 
 					// ALARM_POLARITY < 0 => signaliziram prekoracenje ISPOD
 					if ( inputCfg.alarmPolarity < 0) {
 						if (AD_REZULT_izDMA[i] < ( inputCfg.alarmThreshold ) ) {
-							desioSeTrig = true;
+							adcTriggered = true;
 						} else if (AD_REZULT_izDMA[i] >= ( inputCfg.alarmThreshold + inputCfg.hysteresisValue) ) {
 							// FREEZE!!! NE DIRAJ desioSeTrig da ne ponistis vec postojeci true!
 						}
@@ -1395,15 +1402,22 @@ void startTaskAnalogIn(void *argument)
 
 				}
 
-				if (desioSeTrig) {
+				if (adcTriggered) {
 					// ostavi poruku i signaliziraj trigger
-					snprintf(msg.txt, sizeof(msg.txt), "%s, %u, %u, %u, %u", adc_triggered, AD_REZULT_izDMA[0], AD_REZULT_izDMA[1], AD_REZULT_izDMA[2], AD_REZULT_izDMA[3]);
-					tracePrint1s(qTraceHandle, dbg_3, msg.txt);
+					snprintf(tmsg.txt, sizeof(tmsg.txt), "%s, %u, %u, %u, %u", adc_triggered, AD_REZULT_izDMA[0], AD_REZULT_izDMA[1], AD_REZULT_izDMA[2], AD_REZULT_izDMA[3]);
+					tracePrint1s(qTraceHandle, dbg_3, tmsg.txt);
+					if (! radioReported) {
+						snprintf(rmsg.txt, sizeof(rmsg.txt), "%s, %u, %u, %u, %u", adc_trigg_txt_for_radio, AD_REZULT_izDMA[0], AD_REZULT_izDMA[1], AD_REZULT_izDMA[2], AD_REZULT_izDMA[3]);
+						radioTx1s(qRadioTxHandle, rmsg.txt);
+						tracePrint1s(qTraceHandle, dbg_3, adc_radio_reported);
+						radioReported = true;	// samo jednom obavesti preko radija
+					}
 					osEventFlagsSet(EvtTriggersHandle, flg_ANALOG_TRIGGERED);
 				} else {
 					// nije bio trigger
-					snprintf(msg.txt, sizeof(msg.txt), "%s, %u, %u, %u, %u", adc_not_triggered, AD_REZULT_izDMA[0], AD_REZULT_izDMA[1], AD_REZULT_izDMA[2], AD_REZULT_izDMA[3]);
-					tracePrint1s(qTraceHandle, dbg_6, msg.txt);
+					snprintf(tmsg.txt, sizeof(tmsg.txt), "%s, %u, %u, %u, %u", adc_not_triggered, AD_REZULT_izDMA[0], AD_REZULT_izDMA[1], AD_REZULT_izDMA[2], AD_REZULT_izDMA[3]);
+					tracePrint1s(qTraceHandle, dbg_6, tmsg.txt);
+					radioReported = false;	// pripremi za sledeci
 					osEventFlagsClear(EvtTriggersHandle, flg_ANALOG_TRIGGERED);
 				}
 				// konacno signaliziraj zavrseno merenje
