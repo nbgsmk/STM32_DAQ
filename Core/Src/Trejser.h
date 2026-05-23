@@ -32,8 +32,8 @@ int getTraceLevel();
 void setTraceLevel(int level);
 
 void   tracePrint1s(osMessageQueueId_t queueHandle, DbgLev_t debugVerbosity, const char txt[]);
-void   tracePrint1u(osMessageQueueId_t queueHandle, DbgLev_t debugVerbosity, const char txt[], uint32_t argu1);
-void   tracePrint2u(osMessageQueueId_t queueHandle, DbgLev_t debugVerbosity, const char txt[], uint32_t argu1, uint32_t argu2);
+void   tracePrint1s1u(osMessageQueueId_t queueHandle, DbgLev_t debugVerbosity, const char txt[], uint32_t argu1);
+void   tracePrint1s2u(osMessageQueueId_t queueHandle, DbgLev_t debugVerbosity, const char txt[], uint32_t argu1, uint32_t argu2);
 void tracePrint2s2u(osMessageQueueId_t queueHandle, DbgLev_t debugVerbosity, const char txt1[], const char txt2[], uint32_t argu1, uint32_t argu2);
 
 

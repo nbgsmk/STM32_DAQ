@@ -29,7 +29,7 @@ const uint32_t 	structTimeout = 100;		// (mS) max cekanje da merenjaStruct posta
 /*
  * UID = Uredjaj ID
  */
-void setUID(uint32_t u0, uint32_t u1, uint32_t u2) {
+void setUID(uint8_t u0, uint8_t u1, uint8_t u2) {
 	curMerenja.UID = u0 | (u1 << 8) | (u2 << 16);
 }
 uint32_t getUID() {

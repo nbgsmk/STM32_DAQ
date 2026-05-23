@@ -241,10 +241,12 @@ typedef enum {									// enum je potreban sa switch case
 
 	flg_RADIO_ENABLED =				(1 << 11),
 
-	evtflg_SPARE1_TRIGGER =			(1 << 12),
-	evtflg_SPARE2_TRIGGER =			(1 << 13),
-	evtflg_SPARE3_TRIGGER =			(1 << 14),
-	evtflg_SPARE4_TRIGGER =			(1 << 15),
+	flg_devID_ENABLED =				(1 << 12),	// read device id
+
+	evtflg_SPARE1_TRIGGER =			(1 << 13),
+	evtflg_SPARE2_TRIGGER =			(1 << 14),
+	evtflg_SPARE3_TRIGGER =			(1 << 15),
+	evtflg_SPARE4_TRIGGER =			(1 << 16),
 } Flegovi_t;
 
 typedef enum {
@@ -1033,6 +1035,7 @@ void startTaskDispecer(void *argument)
 	cfg_enabledTasks |= flg_DIGITAL_ENABLED;
 	cfg_enabledTasks |= flg_ANALOG_ENABLED;
 	//	cfg_enabledTasks |= flg_RADIO_ENABLED;
+	cfg_enabledTasks |= flg_devID_ENABLED;
 
 
 	tracePrint1s(qTraceHandle, dbg_3, sys_startup);
@@ -1044,7 +1047,7 @@ void startTaskDispecer(void *argument)
 	for (int i = 0; i < 31; ++i) {
 		uint32_t curflg = (1 << i);
 		if ( (curflg & cfg_enabledTasks) != 0) {
-			tracePrint1u(qTraceHandle, dbg_3, sys_enx, curflg);
+			tracePrint1s1u(qTraceHandle, dbg_3, sys_enx, curflg);
 			osEventFlagsSet(EvtGlobalRunStopHandle, curflg);
 		}
 	}
@@ -1101,14 +1104,14 @@ void startTaskRadioComms(void *argument)
 	/* Infinite loop */
 	for (;;) {
 		// cekam da neko zada start
-		cnt = osMessageQueueGetCount(qRadioRxHandle);
+		cnt = osMessageQueueGetCount(qRadioTxHandle);
 		if (cnt == 0) {
 			osDelay(1);
 			osThreadYield();	// nista nije stiglo, prepusti kontrolu
 		} else {
 			osDelay(1000);		// sacekaj jos neku poruku
 			// radio on			// radio prepare and turn on
-			while (osOK == osMessageQueueGet(qRadioRxHandle, &rmsg, 0U, qWt) ) {
+			while (osOK == osMessageQueueGet(qRadioTxHandle, &rmsg, 0U, qWt) ) {
 				// transmit message for real
 				// osDelay(1);	// treba li pauza izmedju poruka?
 			}
@@ -1156,14 +1159,19 @@ void startTaskRadioComms(void *argument)
 /* USER CODE END Header_startTaskID */
 void startTaskID(void *argument) {
 	/* USER CODE BEGIN startTaskID */
-	uint32_t id0 = 0;
-	uint32_t id1 = 0;
-	uint32_t id2 = 0;
-	// ovo dodje kao neki template
-	// osEventFlagsWait(EvtGlobalRunStopHandle, flg_DIGITAL_ENABLED, osFlagsWaitAll, osWaitForever);
-	// INIT_DIGITAL_INPUTS();	// TODO neki timeout
-	// osEventFlagsSet(EvtTaskHealthHandle, flg_DIGITAL_ENABLED);
-	// tracePrint1s(qTraceHandle, dbg_3, dig_running);
+
+	TraceMessage_t tmsg;
+	const char dev_id_run[] = "device id running";
+	const char dev_id_is[] = "device id";
+
+	uint8_t id0 = 0;
+	uint8_t id1 = 0;
+	uint8_t id2 = 0;
+
+	osEventFlagsWait(EvtGlobalRunStopHandle, flg_devID_ENABLED, osFlagsWaitAll, osWaitForever);
+	// INIT_DEVICE_ID_INPUTS();	// TODO neki timeout
+	osEventFlagsSet(EvtTaskHealthHandle, flg_devID_ENABLED);
+	tracePrint1s(qTraceHandle, dbg_3, dev_id_run);
 	/* Infinite loop */
 	for (;;) {
 		id0 = 0;
@@ -1209,6 +1217,9 @@ void startTaskID(void *argument) {
 		if (HAL_GPIO_ReadPin(KBD_i3_GPIO_Port, KBD_i3_Pin) == GPIO_PIN_SET) { id2 |= (1 << bit3); };
 
 		setUID(id0, id1, id2);
+
+		snprintf(tmsg.txt, sizeof(tmsg.txt), "%s dec: %d.%d.%d (hex24b 0x%06x)", dev_id_is, id0, id1, id2, getUID());
+		tracePrint1s(qTraceHandle, dbg_3, tmsg.txt);
 
 		osDelay(10000);
 	}
@@ -1342,7 +1353,7 @@ void startTaskDigitalIn(void *argument)
 	INIT_DIGITAL_INPUTS();	// TODO neki timeout
 	osEventFlagsSet(EvtTaskHealthHandle, flg_DIGITAL_ENABLED);
 	tracePrint1s(qTraceHandle, dbg_3, dig_running);
-	radioTx1s(qRadioRxHandle, dig_running);
+	radioTx1s(qRadioTxHandle, dig_running);
 
 	/* Infinite loop */
 	for (;;) {
@@ -1371,7 +1382,7 @@ void startTaskDigitalIn(void *argument)
 
 				tracePrint1s(qTraceHandle, dbg_5, dig_complete);
 				osEventFlagsSet(EvtTriggersHandle, flg_DIGITAL_PROCESSING_DONE);				// signaliziram zavrsetak
-				radioTx2s2u(qRadioRxHandle, dig_trig, bintostr, extPinovi, 0);
+				radioTx2s2u(qRadioTxHandle, dig_trig, bintostr, extPinovi, 0);
 
 				break;
 		}

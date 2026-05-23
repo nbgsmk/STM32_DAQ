@@ -31,11 +31,11 @@ void tracePrint1s(osMessageQueueId_t queueHandle, DbgLev_t debugVerbosity, const
 }
 
 
-void tracePrint1u(osMessageQueueId_t queueHandle, DbgLev_t debugVerbosity, const char txt[], uint32_t argu1){
+void tracePrint1s1u(osMessageQueueId_t queueHandle, DbgLev_t debugVerbosity, const char txt[], uint32_t argu1){
 	snprintf(tmsg.txt, sizeof(tmsg.txt), "%s %d", txt, (unsigned int)argu1);
 	tracePrint1s(queueHandle, debugVerbosity, tmsg.txt);
 }
-void tracePrint2u(osMessageQueueId_t queueHandle, DbgLev_t debugVerbosity, const char txt[], uint32_t argu1, uint32_t argu2){
+void tracePrint1s2u(osMessageQueueId_t queueHandle, DbgLev_t debugVerbosity, const char txt[], uint32_t argu1, uint32_t argu2){
 	snprintf(tmsg.txt, sizeof(tmsg.txt), "%s %d %d", txt, (unsigned int)argu1, (unsigned int)argu2);
 	tracePrint1s(queueHandle, debugVerbosity, tmsg.txt);
 }
