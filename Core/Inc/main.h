@@ -71,8 +71,6 @@ void Error_Handler(void);
 #define Exti_d1_Pin GPIO_PIN_1
 #define Exti_d1_GPIO_Port GPIOA
 #define Exti_d1_EXTI_IRQn EXTI1_IRQn
-#define KBD_o0_Pin GPIO_PIN_2
-#define KBD_o0_GPIO_Port GPIOB
 #define KBD_i2_Pin GPIO_PIN_12
 #define KBD_i2_GPIO_Port GPIOB
 #define KBD_i3_Pin GPIO_PIN_13
@@ -80,6 +78,12 @@ void Error_Handler(void);
 #define Exti_d2_Pin GPIO_PIN_8
 #define Exti_d2_GPIO_Port GPIOA
 #define Exti_d2_EXTI_IRQn EXTI9_5_IRQn
+#define USART1_RX_TRACE_Pin GPIO_PIN_9
+#define USART1_RX_TRACE_GPIO_Port GPIOA
+#define USART1_TX_TRACE_Pin GPIO_PIN_10
+#define USART1_TX_TRACE_GPIO_Port GPIOA
+#define KBD_o0_Pin GPIO_PIN_15
+#define KBD_o0_GPIO_Port GPIOA
 #define KBD_i0_Pin GPIO_PIN_4
 #define KBD_i0_GPIO_Port GPIOB
 #define KBD_i1_Pin GPIO_PIN_5

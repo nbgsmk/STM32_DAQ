@@ -258,7 +258,7 @@ typedef enum {
 	bit5 = 5,
 	bit6 = 6,
 	bit7 = 7,
-} ExtiPosition_t;
+} BitPosition_t;
 
 
 /* USER CODE END PV */
@@ -850,7 +850,10 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(BOARD_LED0_GPIO_Port, BOARD_LED0_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, KBD_o0_Pin|KBD_o1_Pin|KBD_o2_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(KBD_o0_GPIO_Port, KBD_o0_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOB, KBD_o1_Pin|KBD_o2_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : BOARD_LED0_Pin */
   GPIO_InitStruct.Pin = BOARD_LED0_Pin;
@@ -865,17 +868,24 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : KBD_o0_Pin KBD_o1_Pin KBD_o2_Pin */
-  GPIO_InitStruct.Pin = KBD_o0_Pin|KBD_o1_Pin|KBD_o2_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
   /*Configure GPIO pins : KBD_i2_Pin KBD_i3_Pin KBD_i0_Pin KBD_i1_Pin */
   GPIO_InitStruct.Pin = KBD_i2_Pin|KBD_i3_Pin|KBD_i0_Pin|KBD_i1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : KBD_o0_Pin */
+  GPIO_InitStruct.Pin = KBD_o0_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(KBD_o0_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : KBD_o1_Pin KBD_o2_Pin */
+  GPIO_InitStruct.Pin = KBD_o1_Pin|KBD_o2_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
@@ -1032,8 +1042,8 @@ void startTaskDispecer(void *argument)
 
 	uint32_t cfg_enabledTasks = 0;
 	cfg_enabledTasks |= flg_BLINK_ENABLED;
-	cfg_enabledTasks |= flg_DIGITAL_ENABLED;
-	cfg_enabledTasks |= flg_ANALOG_ENABLED;
+	// cfg_enabledTasks |= flg_DIGITAL_ENABLED;
+	// cfg_enabledTasks |= flg_ANALOG_ENABLED;
 	//	cfg_enabledTasks |= flg_RADIO_ENABLED;
 	cfg_enabledTasks |= flg_devID_ENABLED;
 
@@ -1157,8 +1167,9 @@ void startTaskRadioComms(void *argument)
 * @retval None
 */
 /* USER CODE END Header_startTaskID */
-void startTaskID(void *argument) {
-	/* USER CODE BEGIN startTaskID */
+void startTaskID(void *argument)
+{
+  /* USER CODE BEGIN startTaskID */
 
 	TraceMessage_t tmsg;
 	const char dev_id_run[] = "device id running";
@@ -1218,12 +1229,16 @@ void startTaskID(void *argument) {
 
 		setUID(id0, id1, id2);
 
-		snprintf(tmsg.txt, sizeof(tmsg.txt), "%s dec: %d.%d.%d (hex24b 0x%06x)", dev_id_is, id0, id1, id2, getUID());
+		char id0str[5],id1str[5],id2str[5];
+		BIN4_TO_STR(id0, id0str);
+		BIN4_TO_STR(id1, id1str);
+		BIN4_TO_STR(id2, id2str);
+		snprintf(tmsg.txt, sizeof(tmsg.txt), "%s (dec: %d.%d.%d) (bin %s, %s, %s)", dev_id_is, id0, id1, id2, id0str, id1str,  id2str);
 		tracePrint1s(qTraceHandle, dbg_3, tmsg.txt);
 
-		osDelay(10000);
+		osDelay(1000);
 	}
-	/* USER CODE END startTaskID */
+  /* USER CODE END startTaskID */
 }
 
 /* USER CODE BEGIN Header_d3start */
@@ -1404,8 +1419,8 @@ void startTaskAnalogIn(void *argument)
   /* USER CODE BEGIN startTaskAnalogIn */
 	TraceMessage_t msg;
 	uint32_t AD_REZULT_izDMA[hadc1.Init.NbrOfConversion];
-	bool desioSeTrig[hadc1.Init.NbrOfConversion];
-	bool zbirniTrigger = false;
+	bool triggerDetected[hadc1.Init.NbrOfConversion];
+	bool triggerZbirni = false;
 	bool alreadyReported = false;
 
 	const char adc_running[] =			"adc running";
@@ -1438,13 +1453,13 @@ void startTaskAnalogIn(void *argument)
 					// ALARM_POLARITY > 0 => signaliziram prekoracenje IZNAD
 					if ( inputCfg.alarmPolarity > 0 ) {
 						if ( AD_REZULT_izDMA[i] > inputCfg.alarmThreshold ) {
-							if (desioSeTrig[i] == false) {
-								desioSeTrig[i] = true;
+							if (triggerDetected[i] == false) {
+								triggerDetected[i] = true;
 								alreadyReported = false;
 							}
 						} else if ( AD_REZULT_izDMA[i] <= (inputCfg.alarmThreshold - inputCfg.hysteresisValue) ) {
-							if (desioSeTrig[i] == true) {
-								desioSeTrig[i] = false;
+							if (triggerDetected[i] == true) {
+								triggerDetected[i] = false;
 								alreadyReported = false;
 							}
 						}
@@ -1453,13 +1468,13 @@ void startTaskAnalogIn(void *argument)
 					// ALARM_POLARITY < 0 => signaliziram prekoracenje ISPOD
 					if ( inputCfg.alarmPolarity < 0) {
 						if (AD_REZULT_izDMA[i] < ( inputCfg.alarmThreshold ) ) {
-							if (desioSeTrig[i] == false) {
-								desioSeTrig[i] = true;
+							if (triggerDetected[i] == false) {
+								triggerDetected[i] = true;
 								alreadyReported = false;
 							}
 						} else if (AD_REZULT_izDMA[i] >= ( inputCfg.alarmThreshold + inputCfg.hysteresisValue) ) {
-							if (desioSeTrig[i] == true) {
-								desioSeTrig[i] = false;
+							if (triggerDetected[i] == true) {
+								triggerDetected[i] = false;
 								alreadyReported = false;
 							}
 						}
@@ -1467,19 +1482,19 @@ void startTaskAnalogIn(void *argument)
 
 					// ALARM_POLARITY = 0 => Disable za taj ulaz. Samo merim i ne signaliziram nikom nista.
 					if ( inputCfg.alarmPolarity == 0) {
-							desioSeTrig[i] = false;
+							triggerDetected[i] = false;
 					}
 
 				}
 
-				zbirniTrigger = false;
+				triggerZbirni = false;
 				for (int i = 0; i < hadc1.Init.NbrOfConversion; ++i) {
-					if (desioSeTrig[i] == true) {
-						zbirniTrigger = true;
+					if (triggerDetected[i] == true) {
+						triggerZbirni = true;
 					}
 				}
 
-				if (zbirniTrigger == true) {
+				if (triggerZbirni == true) {
 					// ostavi poruku i signaliziraj trigger
 					snprintf(msg.txt, sizeof(msg.txt), "%s, %u, %u, %u, %u", adc_triggered, AD_REZULT_izDMA[0], AD_REZULT_izDMA[1], AD_REZULT_izDMA[2], AD_REZULT_izDMA[3]);
 					tracePrint1s(qTraceHandle, dbg_3, msg.txt);
