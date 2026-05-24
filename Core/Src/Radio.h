@@ -13,6 +13,7 @@
 
 
 typedef struct {
+	uint64_t msgSequence;
 	char txt[MAX_RADIO_MSG_LEN];
 } RadioMessage_t;
 

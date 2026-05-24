@@ -362,7 +362,7 @@ int main(void)
   qTraceHandle = osMessageQueueNew (64, sizeof(TRACE_MESSAGE_STRUCT), &qTrace_attributes);
 
   /* creation of qRadioTx */
-  qRadioTxHandle = osMessageQueueNew (64, 128, &qRadioTx_attributes);
+  qRadioTxHandle = osMessageQueueNew (64, sizeof(RADIO_MESSAGE_STRUCT), &qRadioTx_attributes);
 
   /* creation of qRadioRx */
   qRadioRxHandle = osMessageQueueNew (16, 128, &qRadioRx_attributes);
@@ -1114,15 +1114,17 @@ void startTaskRadioComms(void *argument)
 	/* Infinite loop */
 	for (;;) {
 		// cekam da neko zada start
-		osMessageQueueGet(qRadioTxHandle, &rmsg.txt, 0U, osWaitForever);
+		osMessageQueueGet(qRadioTxHandle, &rmsg, 0U, osWaitForever);
 		osDelay(1000);			// sacekaj jos neku poruku
-		tracePrint1s(qTraceHandle, dbg_3, "rad_txOn");
+		tracePrint1s(qTraceHandle, dbg_3, rad_txOn);
 		// radio on			// radio prepare and turn on
 		// radio tramsmit
-		while (osOK == osMessageQueueGet(qRadioTxHandle, &rmsg.txt, 0U, qWt) ) {
+		HAL_UART_Transmit(&UART_radio, (uint8_t *)rmsg.txt, strlen(rmsg.txt), 1000);
+		while (osOK == osMessageQueueGet(qRadioTxHandle, &rmsg, 0U, qWt) ) {
 			// osDelay(1);	// treba li pauza izmedju poruka?
 			// tracePrint rmsg.txt
 			// radio tramsmit
+			HAL_UART_Transmit(&UART_radio, (uint8_t *)rmsg.txt, strlen(rmsg.txt), 1000);
 		}
 		// radio off
 		tracePrint1s(qTraceHandle, dbg_3, rad_txDone);
@@ -1156,6 +1158,8 @@ void startTaskID(void *argument)
 	// INIT_DEVICE_ID_INPUTS();	// TODO neki timeout
 	osEventFlagsSet(EvtTaskHealthHandle, flg_devID_ENABLED);
 	tracePrint1s(qTraceHandle, dbg_3, dev_id_run);
+	radioTx1s(qRadioTxHandle, dev_id_run);
+
 	/* Infinite loop */
 	for (;;) {
 		id0 = 0;
@@ -1334,6 +1338,7 @@ void startTaskDigitalIn(void *argument)
 	// irq callback salje broj pina kao thread flag
 	const char dig_running[] =		"digital running";
 	const char dig_trig[] = 		"digital triggered";
+	const char dig_inputs[] = 		"digital inputs";
 	const char dig_complete[] = 	"digital processing done";
 	uint32_t extPinovi = 0;
 
@@ -1363,14 +1368,12 @@ void startTaskDigitalIn(void *argument)
 				setDigitalResult(extPinovi);
 				char bintostr[5];
 				BIN4_TO_STR(extPinovi, bintostr);
-//				snprintf(msg.txt, sizeof(msg.txt), "%s: %s (%d)", dig_trig, bintostr, (unsigned int)extPinovi);
-//				tracePrint(qTraceHandle, dbg_3, msg.txt);
-				tracePrint2s2u(qTraceHandle, dbg_3, dig_trig, bintostr, extPinovi, 0);
+				tracePrint2s2u(qTraceHandle, dbg_3, dig_trig, bintostr, extPinovi, extPinovi);
 				osEventFlagsSet(EvtTriggersHandle, flg_DIGITAL_TRIGGERED);
 
 				tracePrint1s(qTraceHandle, dbg_5, dig_complete);
 				osEventFlagsSet(EvtTriggersHandle, flg_DIGITAL_PROCESSING_DONE);				// signaliziram zavrsetak
-				radioTx2s2u(qRadioTxHandle, dig_trig, bintostr, extPinovi, 0);
+				radioTx2s2u(qRadioTxHandle, dig_inputs, bintostr, extPinovi, extPinovi);
 
 				break;
 		}
@@ -1400,12 +1403,13 @@ void startTaskAnalogIn(void *argument)
 	const char adc_running[] =			"adc running";
 	const char adc_triggered[] = 		"adc done, triggered: yes";
 	const char adc_not_triggered[] = 	"adc done, triggered: no";
-	const char adc_values[] = 			"adc values: ";
+	const char adc_inputs[] = 			"adc inputs: ";
 
 	osEventFlagsWait(EvtGlobalRunStopHandle, flg_ANALOG_ENABLED, osFlagsWaitAll, osWaitForever);
 	INIT_ADC();	// TODO neki timeout
 	osEventFlagsSet(EvtTaskHealthHandle, flg_ANALOG_ENABLED);
 	tracePrint1s(qTraceHandle, dbg_3, adc_running);
+	radioTx1s(qRadioTxHandle, adc_running);
 
 	/* Infinite loop */
 	for (;;) {
@@ -1481,7 +1485,7 @@ void startTaskAnalogIn(void *argument)
 				}
 
 				if ( alreadyReported == false ){
-					snprintf(msg.txt, sizeof(msg.txt), "%s %u, %u, %u, %u", adc_values, AD_REZULT_izDMA[0], AD_REZULT_izDMA[1], AD_REZULT_izDMA[2], AD_REZULT_izDMA[3]);
+					snprintf(msg.txt, sizeof(msg.txt), "%s %u, %u, %u, %u", adc_inputs, AD_REZULT_izDMA[0], AD_REZULT_izDMA[1], AD_REZULT_izDMA[2], AD_REZULT_izDMA[3]);
 					radioTx1s(qRadioTxHandle, msg.txt);
 					alreadyReported = true;
 				}

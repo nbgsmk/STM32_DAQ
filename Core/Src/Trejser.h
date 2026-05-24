@@ -8,7 +8,7 @@
 #ifndef SRC_TREJSER_H_
 #define SRC_TREJSER_H_
 
-//#include "main.h"
+#include "main.h"
 
 #define MAX_TRACE_MSG_LEN 128						// maksimalna duzina moruke u msgQueue
 
