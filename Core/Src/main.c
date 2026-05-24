@@ -1114,49 +1114,20 @@ void startTaskRadioComms(void *argument)
 	/* Infinite loop */
 	for (;;) {
 		// cekam da neko zada start
-		cnt = osMessageQueueGetCount(qRadioTxHandle);
-		if (cnt == 0) {
-			osDelay(1);
-			osThreadYield();	// nista nije stiglo, prepusti kontrolu
-		} else {
-			osDelay(1000);		// sacekaj jos neku poruku
-			// radio on			// radio prepare and turn on
-			while (osOK == osMessageQueueGet(qRadioTxHandle, &rmsg.txt, 0U, qWt) ) {
-				// transmit message for real
-				// osDelay(1);	// treba li pauza izmedju poruka?
-				tracePrint1s(qTraceHandle, dbg_3, rad_txDone);
-				// tracePrint1s(qTraceHandle, dbg_3, rmsg.txt);
-			}
-			// radio off
-			osDelay(100);	// odmori se
-
+		osMessageQueueGet(qRadioTxHandle, &rmsg.txt, 0U, osWaitForever);
+		osDelay(1000);			// sacekaj jos neku poruku
+		tracePrint1s(qTraceHandle, dbg_3, "rad_txOn");
+		// radio on			// radio prepare and turn on
+		// radio tramsmit
+		while (osOK == osMessageQueueGet(qRadioTxHandle, &rmsg.txt, 0U, qWt) ) {
+			// osDelay(1);	// treba li pauza izmedju poruka?
+			// tracePrint rmsg.txt
+			// radio tramsmit
 		}
-		// zatim cekam da sva merenja zavrse
-//		osMutexAcquire(mtxMeasCntHandle, osWaitForever);
-//		if (rez == osErrorTimeout) {
-//			// posalji sta imas, cak i ako se nisu svi senzori odazvali na vreme (mozda zbog kvara?)
-//			sprintf(bfr, "%s \n\r", rad_txOnIncplt);
-//			osMessageQueuePut(qTraceExecHandle, &ptr, 0U, qWt);
-//			osDelay(200);
-//			sprintf(bfr, "%s \n\r", rad_txOn);
-//			osMessageQueuePut(qTraceExecHandle, &ptr, 0U, qWt);
-//			// TODO RADIO SEND pritom obavezno signaliziraj neku gresku
-//
-//			osDelay(1000);	// TODO simulira trajanje radio transmisije
-//			sprintf(bfr, "%s \n\r", rad_txDone);
-//			osMessageQueuePut(qTraceExecHandle, &ptr, 0U, qWt);
-//		} else {
-//			sprintf(bfr, "%s \n\r", rad_txOn);
-//			osMessageQueuePut(qTraceExecHandle, &ptr, 0U, qWt);
-//			// TODO RADIO SEND
-//
-//			osDelay(1000);	// TODO simulira trajanje radio transmisije
-//			sprintf(bfr, "%s \n\r", rad_txDone);
-//			osMessageQueuePut(qTraceExecHandle, &ptr, 0U, qWt);
-//		}
-//		osMutexRelease(mtxMeasCntHandle);
+		// radio off
+		tracePrint1s(qTraceHandle, dbg_3, rad_txDone);
+		osDelay(100);	// odmori se
 
-		osDelay(1);
 		osThreadYield();
 	}
   /* USER CODE END startTaskRadioComms */
@@ -1235,7 +1206,7 @@ void startTaskID(void *argument)
 		BIN4_TO_STR(id0, id0str);
 		BIN4_TO_STR(id1, id1str);
 		BIN4_TO_STR(id2, id2str);
-		snprintf(tmsg.txt, sizeof(tmsg.txt), "%s (dec: %d.%d.%d) (bin %s, %s, %s, bin32 %d) (bcd %d)", dev_id_is, id0, id1, id2, id0str, id1str,  id2str, getUID_bin(), getUID_bcd());
+		snprintf(tmsg.txt, sizeof(tmsg.txt), "%s (raw %d, %d, %d) (bin %s, %s, %s, dec %d) (bcd %d)", dev_id_is, id2, id1, id0, id2str, id1str,  id0str, getUID_bin(), getUID_bcd());
 		tracePrint1s(qTraceHandle, dbg_3, tmsg.txt);
 
 		osDelay(20000);
@@ -1421,8 +1392,8 @@ void startTaskAnalogIn(void *argument)
   /* USER CODE BEGIN startTaskAnalogIn */
 	TraceMessage_t msg;
 	ADinput_t inputCfg;
-	uint32_t AD_REZULT_izDMA[4];
-	bool triggerDetected[4] = {false};
+	uint32_t AD_REZULT_izDMA[MAX_ANALOG_INPUTS];
+	bool triggerDetected[MAX_ANALOG_INPUTS] = {false};
 	bool triggerZbirni = false;
 	bool alreadyReported = false;
 
