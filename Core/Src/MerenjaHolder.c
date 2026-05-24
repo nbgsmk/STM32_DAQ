@@ -5,8 +5,9 @@
 #include <stdint.h>
 #include "cmsis_os2.h"
 
-#include "Merenja.h"
+#include "MerenjaHolder.h"
 #include "Kalendar.h"
+
 
 osMutexId_t mutexMerenjaHandle;
 const osMutexAttr_t mutexMerenja_attributes = {
@@ -24,7 +25,9 @@ typedef struct {
 CurMerenja_t curMerenja;
 const uint32_t 	structTimeout = 100;		// (mS) max cekanje da merenjaStruct postane slobodan
 
-
+void INIT_MERENJA_HOLDER() {
+	mutexMerenjaHandle = osMutexNew(&mutexMerenja_attributes);
+}
 
 /*
  * UID = Uredjaj ID

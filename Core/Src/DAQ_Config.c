@@ -4,27 +4,29 @@
 
 #include <stdint.h>
 #include "DAQ_Config.h"
-#include "Merenja.h"
+#include "MerenjaHolder.h"
 
 osStatus_t INIT_DAQ_HW(){
+	INIT_MERENJA_HOLDER();
 	return osOK;
 }
 
 osStatus_t INIT_ADC(){
+
 
 	// init all inputs
 	for (int i = 0; i < ADC_NUMof_INPUTS; ++i) {
 		setAnalogInputCfg(i, 0, 0, 0);
 	}
 
-	setAnalogInputCfg(0, 2000, 1, 50);
-	setAnalogInputCfg(1, 2000, 1, 50);
-	setAnalogInputCfg(2, 2000, 1, 50);
-	setAnalogInputCfg(3, 2000, 1, 50);
-	setAnalogInputCfg(4, 2000, 1, 50);
-	setAnalogInputCfg(5, 2000, 1, 50);
-	setAnalogInputCfg(6, 2000, 1, 50);
-	setAnalogInputCfg(7, 2000, 1, 50);
+	setAnalogInputCfg(0, 2000, 0, 50);
+	setAnalogInputCfg(1, 2001, 1, 51);
+	setAnalogInputCfg(2, 2002, 2, 52);
+	setAnalogInputCfg(3, 2003, 3, 53);
+	setAnalogInputCfg(4, 2004, 4, 54);
+	setAnalogInputCfg(5, 2005, 5, 55);
+	setAnalogInputCfg(6, 2006, 6, 56);
+	setAnalogInputCfg(7, 2007, 7, 57);
 	return osOK;
 }
 

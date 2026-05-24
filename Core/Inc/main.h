@@ -82,16 +82,16 @@ void Error_Handler(void);
 #define USART1_RX_TRACE_GPIO_Port GPIOA
 #define USART1_TX_TRACE_Pin GPIO_PIN_10
 #define USART1_TX_TRACE_GPIO_Port GPIOA
-#define KBD_o0_Pin GPIO_PIN_15
-#define KBD_o0_GPIO_Port GPIOA
+#define KBD_digit0_Pin GPIO_PIN_15
+#define KBD_digit0_GPIO_Port GPIOA
 #define KBD_i0_Pin GPIO_PIN_4
 #define KBD_i0_GPIO_Port GPIOB
 #define KBD_i1_Pin GPIO_PIN_5
 #define KBD_i1_GPIO_Port GPIOB
-#define KBD_o1_Pin GPIO_PIN_7
-#define KBD_o1_GPIO_Port GPIOB
-#define KBD_o2_Pin GPIO_PIN_8
-#define KBD_o2_GPIO_Port GPIOB
+#define KBD_digit1_Pin GPIO_PIN_7
+#define KBD_digit1_GPIO_Port GPIOB
+#define KBD_digit2_Pin GPIO_PIN_8
+#define KBD_digit2_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 

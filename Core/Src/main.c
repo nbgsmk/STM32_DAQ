@@ -29,7 +29,7 @@
 #include "DAQ_Config.h"
 #include "Trejser.h"
 #include "Radio.h"
-#include "Merenja.h"
+#include "MerenjaHolder.h"
 #include "Kalendar.h"
 
 /* USER CODE END Includes */
@@ -850,10 +850,10 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(BOARD_LED0_GPIO_Port, BOARD_LED0_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(KBD_o0_GPIO_Port, KBD_o0_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(KBD_digit0_GPIO_Port, KBD_digit0_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, KBD_o1_Pin|KBD_o2_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, KBD_digit1_Pin|KBD_digit2_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : BOARD_LED0_Pin */
   GPIO_InitStruct.Pin = BOARD_LED0_Pin;
@@ -874,15 +874,15 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : KBD_o0_Pin */
-  GPIO_InitStruct.Pin = KBD_o0_Pin;
+  /*Configure GPIO pin : KBD_digit0_Pin */
+  GPIO_InitStruct.Pin = KBD_digit0_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(KBD_o0_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(KBD_digit0_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : KBD_o1_Pin KBD_o2_Pin */
-  GPIO_InitStruct.Pin = KBD_o1_Pin|KBD_o2_Pin;
+  /*Configure GPIO pins : KBD_digit1_Pin KBD_digit2_Pin */
+  GPIO_InitStruct.Pin = KBD_digit1_Pin|KBD_digit2_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -1042,9 +1042,9 @@ void startTaskDispecer(void *argument)
 
 	uint32_t cfg_enabledTasks = 0;
 	cfg_enabledTasks |= flg_BLINK_ENABLED;
-	// cfg_enabledTasks |= flg_DIGITAL_ENABLED;
-	// cfg_enabledTasks |= flg_ANALOG_ENABLED;
-	//	cfg_enabledTasks |= flg_RADIO_ENABLED;
+	cfg_enabledTasks |= flg_DIGITAL_ENABLED;
+	cfg_enabledTasks |= flg_ANALOG_ENABLED;
+	cfg_enabledTasks |= flg_RADIO_ENABLED;
 	cfg_enabledTasks |= flg_devID_ENABLED;
 
 
@@ -1188,12 +1188,12 @@ void startTaskID(void *argument)
 		id0 = 0;
 		id1 = 0;
 		id2 = 0;
-		HAL_GPIO_WritePin(KBD_o0_GPIO_Port, KBD_o0_Pin, GPIO_PIN_SET);
-		HAL_GPIO_WritePin(KBD_o1_GPIO_Port, KBD_o1_Pin, GPIO_PIN_SET);
-		HAL_GPIO_WritePin(KBD_o2_GPIO_Port, KBD_o2_Pin, GPIO_PIN_SET);
+		HAL_GPIO_WritePin(KBD_digit0_GPIO_Port, KBD_digit0_Pin, GPIO_PIN_SET);
+		HAL_GPIO_WritePin(KBD_digit1_GPIO_Port, KBD_digit1_Pin, GPIO_PIN_SET);
+		HAL_GPIO_WritePin(KBD_digit2_GPIO_Port, KBD_digit2_Pin, GPIO_PIN_SET);
 
 		// PRVA cifra
-		HAL_GPIO_WritePin(KBD_o0_GPIO_Port, KBD_o0_Pin, GPIO_PIN_RESET);
+		HAL_GPIO_WritePin(KBD_digit0_GPIO_Port, KBD_digit0_Pin, GPIO_PIN_RESET);
 		osDelay(20);
 		//i am  1 << (Exti_d2_Pin>>1)  zato sto gpio pinovi u hal-u idu od 1..32 a meni treba shiftofanje 0..31 puta
 		if (HAL_GPIO_ReadPin(KBD_i0_GPIO_Port, KBD_i0_Pin) == GPIO_PIN_SET) { id0 |= (1 << bit0); };
@@ -1202,11 +1202,11 @@ void startTaskID(void *argument)
 		if (HAL_GPIO_ReadPin(KBD_i3_GPIO_Port, KBD_i3_Pin) == GPIO_PIN_SET) { id0 |= (1 << bit3); };
 
 		// DRUGA cifra
-		HAL_GPIO_WritePin(KBD_o0_GPIO_Port, KBD_o0_Pin, GPIO_PIN_SET);
-		HAL_GPIO_WritePin(KBD_o1_GPIO_Port, KBD_o1_Pin, GPIO_PIN_SET);
-		HAL_GPIO_WritePin(KBD_o2_GPIO_Port, KBD_o2_Pin, GPIO_PIN_SET);
+		HAL_GPIO_WritePin(KBD_digit0_GPIO_Port, KBD_digit0_Pin, GPIO_PIN_SET);
+		HAL_GPIO_WritePin(KBD_digit1_GPIO_Port, KBD_digit1_Pin, GPIO_PIN_SET);
+		HAL_GPIO_WritePin(KBD_digit2_GPIO_Port, KBD_digit2_Pin, GPIO_PIN_SET);
 
-		HAL_GPIO_WritePin(KBD_o1_GPIO_Port, KBD_o1_Pin, GPIO_PIN_RESET);
+		HAL_GPIO_WritePin(KBD_digit1_GPIO_Port, KBD_digit1_Pin, GPIO_PIN_RESET);
 		osDelay(20);
 		//i am  1 << (Exti_d2_Pin>>1)  zato sto gpio pinovi u hal-u idu od 1..32 a meni treba shiftofanje 0..31 puta
 		if (HAL_GPIO_ReadPin(KBD_i0_GPIO_Port, KBD_i0_Pin) == GPIO_PIN_SET) { id1 |= (1 << bit0); };
@@ -1215,11 +1215,11 @@ void startTaskID(void *argument)
 		if (HAL_GPIO_ReadPin(KBD_i3_GPIO_Port, KBD_i3_Pin) == GPIO_PIN_SET) { id1 |= (1 << bit3); };
 
 		// TRECA cifra
-		HAL_GPIO_WritePin(KBD_o0_GPIO_Port, KBD_o0_Pin, GPIO_PIN_SET);
-		HAL_GPIO_WritePin(KBD_o1_GPIO_Port, KBD_o1_Pin, GPIO_PIN_SET);
-		HAL_GPIO_WritePin(KBD_o2_GPIO_Port, KBD_o2_Pin, GPIO_PIN_SET);
+		HAL_GPIO_WritePin(KBD_digit0_GPIO_Port, KBD_digit0_Pin, GPIO_PIN_SET);
+		HAL_GPIO_WritePin(KBD_digit1_GPIO_Port, KBD_digit1_Pin, GPIO_PIN_SET);
+		HAL_GPIO_WritePin(KBD_digit2_GPIO_Port, KBD_digit2_Pin, GPIO_PIN_SET);
 
-		HAL_GPIO_WritePin(KBD_o2_GPIO_Port, KBD_o2_Pin, GPIO_PIN_RESET);
+		HAL_GPIO_WritePin(KBD_digit2_GPIO_Port, KBD_digit2_Pin, GPIO_PIN_RESET);
 		osDelay(20);
 		//i am  1 << (Exti_d2_Pin>>1)  zato sto gpio pinovi u hal-u idu od 1..32 a meni treba shiftofanje 0..31 puta
 		if (HAL_GPIO_ReadPin(KBD_i0_GPIO_Port, KBD_i0_Pin) == GPIO_PIN_SET) { id2 |= (1 << bit0); };
@@ -1236,7 +1236,7 @@ void startTaskID(void *argument)
 		snprintf(tmsg.txt, sizeof(tmsg.txt), "%s (dec: %d.%d.%d) (bin %s, %s, %s)", dev_id_is, id0, id1, id2, id0str, id1str,  id2str);
 		tracePrint1s(qTraceHandle, dbg_3, tmsg.txt);
 
-		osDelay(1000);
+		osDelay(20000);
 	}
   /* USER CODE END startTaskID */
 }
@@ -1418,8 +1418,9 @@ void startTaskAnalogIn(void *argument)
 {
   /* USER CODE BEGIN startTaskAnalogIn */
 	TraceMessage_t msg;
-	uint32_t AD_REZULT_izDMA[hadc1.Init.NbrOfConversion];
-	bool triggerDetected[hadc1.Init.NbrOfConversion];
+	ADinput_t inputCfg;
+	uint32_t AD_REZULT_izDMA[4];
+	bool triggerDetected[4] = {false};
 	bool triggerZbirni = false;
 	bool alreadyReported = false;
 
@@ -1449,7 +1450,7 @@ void startTaskAnalogIn(void *argument)
 				for (uint32_t i = 0; i < hadc1.Init.NbrOfConversion; i++) {
 					setAnalogResult(i, AD_REZULT_izDMA[i]);
 
-					ADinput_t inputCfg = getAnalogInputCfg(i);
+					inputCfg = getAnalogInputCfg(i);
 					// ALARM_POLARITY > 0 => signaliziram prekoracenje IZNAD
 					if ( inputCfg.alarmPolarity > 0 ) {
 						if ( AD_REZULT_izDMA[i] > inputCfg.alarmThreshold ) {

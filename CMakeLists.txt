@@ -39,8 +39,8 @@ add_executable(${CMAKE_PROJECT_NAME}
         Core/Src/DAQ_Config.h
         Core/Src/Kalendar.c
         Core/Src/Kalendar.h
-        Core/Src/Merenja.c
-        Core/Src/Merenja.h
+        Core/Src/MerenjaHolder.c
+        Core/Src/MerenjaHolder.h
         Core/Src/Radio.c
         Core/Src/Radio.h
         Core/Src/Trejser.c
