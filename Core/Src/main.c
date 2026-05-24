@@ -1235,7 +1235,7 @@ void startTaskID(void *argument)
 		BIN4_TO_STR(id0, id0str);
 		BIN4_TO_STR(id1, id1str);
 		BIN4_TO_STR(id2, id2str);
-		snprintf(tmsg.txt, sizeof(tmsg.txt), "%s (dec: %d.%d.%d) (bin %s, %s, %s)", dev_id_is, id0, id1, id2, id0str, id1str,  id2str);
+		snprintf(tmsg.txt, sizeof(tmsg.txt), "%s (dec: %d.%d.%d) (bin %s, %s, %s, bin32 %d) (bcd %d)", dev_id_is, id0, id1, id2, id0str, id1str,  id2str, getUID_bin(), getUID_bcd());
 		tracePrint1s(qTraceHandle, dbg_3, tmsg.txt);
 
 		osDelay(20000);
