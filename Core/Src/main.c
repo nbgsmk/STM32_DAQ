@@ -1121,9 +1121,11 @@ void startTaskRadioComms(void *argument)
 		} else {
 			osDelay(1000);		// sacekaj jos neku poruku
 			// radio on			// radio prepare and turn on
-			while (osOK == osMessageQueueGet(qRadioTxHandle, &rmsg, 0U, qWt) ) {
+			while (osOK == osMessageQueueGet(qRadioTxHandle, &rmsg.txt, 0U, qWt) ) {
 				// transmit message for real
 				// osDelay(1);	// treba li pauza izmedju poruka?
+				tracePrint1s(qTraceHandle, dbg_3, rad_txDone);
+				// tracePrint1s(qTraceHandle, dbg_3, rmsg.txt);
 			}
 			// radio off
 			osDelay(100);	// odmori se
@@ -1508,7 +1510,7 @@ void startTaskAnalogIn(void *argument)
 				}
 
 				if ( alreadyReported == false ){
-					snprintf(msg.txt, sizeof(msg.txt), "%s, %u, %u, %u, %u", adc_values, AD_REZULT_izDMA[0], AD_REZULT_izDMA[1], AD_REZULT_izDMA[2], AD_REZULT_izDMA[3]);
+					snprintf(msg.txt, sizeof(msg.txt), "%s %u, %u, %u, %u", adc_values, AD_REZULT_izDMA[0], AD_REZULT_izDMA[1], AD_REZULT_izDMA[2], AD_REZULT_izDMA[3]);
 					radioTx1s(qRadioTxHandle, msg.txt);
 					alreadyReported = true;
 				}
