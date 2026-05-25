@@ -9,16 +9,38 @@
 #include <stdio.h>
 #include "main.h"
 #include "cmsis_os2.h"
+#include "MerenjaHolder.h"
 #include "Radio.h"
 
 RadioMessage_t rmsg;
-RadioMessage_t tmp;
 
-
+typedef enum {
+	PLAIN,
+	JSON,
+} TY;
 void sendit(osMessageQueueId_t queue, const char txt[]) {
-	// snprintf(rmsg.txt, sizeof(rmsg.txt), "%llu %s \n\r", rmsg.msgSequence++, txt);
-	snprintf(rmsg.txt, sizeof(rmsg.txt), "{ \"msgSeq\": %llu, \"txt\": \"%s\" } \n\r", rmsg.msgSequence++, txt);
+	rmsg.tick = osKernelGetTickCount();
+	rmsg.deviceId = getUID_bin();
+
+	TY ty = JSON;
+	switch (ty) {
+		case 0:
+			snprintf(rmsg.txt, sizeof(rmsg.txt), "%llu %d %s \n\r", rmsg.tick, rmsg.deviceId, txt);
+			break;
+
+		case 1:
+			snprintf(rmsg.txt, sizeof(rmsg.txt), "{ "
+				"\"tick\": %llu, "
+				"\"UID\": \"%d\" "
+				"\"txt\": \"%s\" "
+				"} \n\r", rmsg.tick, rmsg.deviceId, txt);
+			break;
+
+			default:
+			break;
+	}
 	osMessageQueuePut(queue, &rmsg, 0U, 100);
+
 }
 void radioTx1s(osMessageQueueId_t queueHandle, const char txt[]){
 	RadioMessage_t r;
