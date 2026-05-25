@@ -12,9 +12,12 @@
 #include "Radio.h"
 
 RadioMessage_t rmsg;
+RadioMessage_t tmp;
+
 
 void sendit(osMessageQueueId_t queue, const char txt[]) {
-	snprintf(rmsg.txt, sizeof(rmsg.txt), "%llu %s \n\r", rmsg.msgSequence++, txt);
+	// snprintf(rmsg.txt, sizeof(rmsg.txt), "%llu %s \n\r", rmsg.msgSequence++, txt);
+	snprintf(rmsg.txt, sizeof(rmsg.txt), "{ \"msgSeq\": %llu, \"txt\": \"%s\" } \n\r", rmsg.msgSequence++, txt);
 	osMessageQueuePut(queue, &rmsg, 0U, 100);
 }
 void radioTx1s(osMessageQueueId_t queueHandle, const char txt[]){
