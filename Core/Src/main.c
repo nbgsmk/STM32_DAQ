@@ -1062,6 +1062,9 @@ void startTaskDispecer(void *argument)
 		}
 	}
 
+	osDelay(3000);
+	osThreadFlagsSet(TaskDigitalInHandle, flg_DIGITAL_REQUEST);
+
 
 	/* Infinite loop */
 	for (;;) {
@@ -1355,6 +1358,10 @@ void startTaskDigitalIn(void *argument)
 			case osFlagsErrorTimeout:
 				// ni jedan digitalni ulaz se nije promenio. ne radim nista
 				break;
+
+			case flg_DIGITAL_REQUEST:
+				__NOP();
+				// break;
 
 				default:
 				// bilo koji flag -> primio sam EXTI sa nekog digitalnog pina ili je trazeno merenje zbog promene na ANALOGNOM delu
