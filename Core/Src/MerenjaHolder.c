@@ -17,9 +17,6 @@ const osMutexAttr_t mutexMerenja_attributes = {
 
 
 typedef struct {
-	uint32_t uid96bit[3];
-	uint32_t UID_bin;
-	uint32_t UID_bcd;
 	uint32_t timeStamp;
 	uint32_t digitalInputs;							// 32 bita za digitalne ulaze, sto nikada nece biti
 	ADinput_t analogInput[MAX_ANALOG_INPUTS];		// TODO nikad nece biti 32 kanala. ispraviti da bude hadc1.Init.NbrOfConversion
@@ -30,24 +27,8 @@ const uint32_t 	structTimeout = 100;		// (mS) max cekanje da merenjaStruct posta
 
 void INIT_MERENJA_HOLDER() {
 	mutexMerenjaHandle = osMutexNew(&mutexMerenja_attributes);
-	curMerenja.uid96bit[0] = HAL_GetUIDw0();
-	curMerenja.uid96bit[1] = HAL_GetUIDw1();
-	curMerenja.uid96bit[2] = HAL_GetUIDw2();
 }
 
-/*
- * UID = Uredjaj ID
- */
-void setUID(uint8_t u0, uint8_t u1, uint8_t u2) {
-	curMerenja.UID_bin = (u2 << 8) | (u1 << 4) | u0;
-	curMerenja.UID_bcd = (u2 * 10000) + (u1 * 100) + u0;
-}
-uint32_t getUID_bin() {
-	return curMerenja.UID_bin;
-}
-uint32_t getUID_bcd() {
-	return curMerenja.UID_bcd;
-}
 
 
 CurMerenja_t get() {

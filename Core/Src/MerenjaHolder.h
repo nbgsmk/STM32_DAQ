@@ -22,12 +22,6 @@ typedef struct {
 void INIT_MERENJA_HOLDER();
 
 
-/*
- * UID = Uredjaj ID
- */
-void setUID(uint8_t u0, uint8_t u1, uint8_t u2);
-uint32_t getUID_bin();
-uint32_t getUID_bcd();
 
 
 /*

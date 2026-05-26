@@ -4,9 +4,11 @@
 
 #include <stdint.h>
 #include "DAQ_Config.h"
+#include "DeviceID.h"
 #include "MerenjaHolder.h"
 
 osStatus_t INIT_DAQ_HW(){
+	// INIT_DEVICE_ID();
 	INIT_MERENJA_HOLDER();
 	return osOK;
 }

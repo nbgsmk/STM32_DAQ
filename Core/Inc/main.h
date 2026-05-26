@@ -36,6 +36,16 @@ extern "C" {
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
+typedef enum {
+  bit0 = 0,
+  bit1 = 1,
+  bit2 = 2,
+  bit3 = 3,
+  bit4 = 4,
+  bit5 = 5,
+  bit6 = 6,
+  bit7 = 7,
+} BitPosition_t;
 
 /* USER CODE END ET */
 

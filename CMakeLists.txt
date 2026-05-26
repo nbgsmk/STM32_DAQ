@@ -45,6 +45,8 @@ add_executable(${CMAKE_PROJECT_NAME}
         Core/Src/Radio.h
         Core/Src/Trejser.c
         Core/Src/Trejser.h
+        Core/Src/DeviceID.c
+        Core/Src/DeviceID.h
 )
 
 # Add STM32CubeMX generated sources

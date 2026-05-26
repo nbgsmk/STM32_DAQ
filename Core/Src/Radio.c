@@ -12,6 +12,8 @@
 #include "MerenjaHolder.h"
 #include "Radio.h"
 
+#include "DeviceID.h"
+
 RadioMessage_t rmsg;
 
 typedef enum {
@@ -22,16 +24,16 @@ void sendit(osMessageQueueId_t queue, const char txt[]) {
 	rmsg.tick = osKernelGetTickCount();
 	rmsg.deviceId = getUID_bin();
 
-	TY ty = JSON;
+	TY ty = PLAIN;
 	switch (ty) {
 		case 0:
-			snprintf(rmsg.txt, sizeof(rmsg.txt), "%llu %d %s \n\r", rmsg.tick, rmsg.deviceId, txt);
+			snprintf(rmsg.txt, sizeof(rmsg.txt), "tick:%llu id:%d %s \n\r", rmsg.tick, rmsg.deviceId, txt);
 			break;
 
 		case 1:
 			snprintf(rmsg.txt, sizeof(rmsg.txt), "{ "
 				"\"tick\": %llu, "
-				"\"UID\": \"%d\" "
+				"\"id\": \"%d\" "
 				"\"txt\": \"%s\" "
 				"} \n\r", rmsg.tick, rmsg.deviceId, txt);
 			break;

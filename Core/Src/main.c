@@ -27,6 +27,7 @@
 #include "usbd_cdc_if.h"
 #include "BoardLed.h"
 #include "DAQ_Config.h"
+#include "DeviceID.h"
 #include "Trejser.h"
 #include "Radio.h"
 #include "MerenjaHolder.h"
@@ -249,16 +250,6 @@ typedef enum {									// enum je potreban sa switch case
 	evtflg_SPARE4_TRIGGER =			(1 << 16),
 } Flegovi_t;
 
-typedef enum {
-	bit0 = 0,
-	bit1 = 1,
-	bit2 = 2,
-	bit3 = 3,
-	bit4 = 4,
-	bit5 = 5,
-	bit6 = 6,
-	bit7 = 7,
-} BitPosition_t;
 
 
 /* USER CODE END PV */
@@ -1031,7 +1022,6 @@ void startTaskDispecer(void *argument)
 	const char sys_startup[] =		"system: startup...";
 	const char sys_ok[] = 			"system: startup OK";
 	const char sys_enx[] =			"system: enabling task(s)";
-	uint32_t rez;
 
 	tracePrint1s(qTraceHandle, dbg_2, sys_boot);
 
@@ -1042,14 +1032,15 @@ void startTaskDispecer(void *argument)
 
 	uint32_t cfg_enabledTasks = 0;
 	cfg_enabledTasks |= flg_BLINK_ENABLED;
+	cfg_enabledTasks |= flg_devID_ENABLED;
+	osDelay(500);		// malo pauze dok procitam ID
 	cfg_enabledTasks |= flg_DIGITAL_ENABLED;
 	cfg_enabledTasks |= flg_ANALOG_ENABLED;
 	cfg_enabledTasks |= flg_RADIO_ENABLED;
-	cfg_enabledTasks |= flg_devID_ENABLED;
 
 
 	tracePrint1s(qTraceHandle, dbg_3, sys_startup);
-	osDelay(1000);											// TODO dymmy init delay
+	osDelay(1000);											// TODO dymmy delay for hardware initialiation
 	tracePrint1s(qTraceHandle, dbg_3, sys_ok);
 	radioTx1s(qRadioTxHandle, sys_ok);
 
@@ -1062,13 +1053,13 @@ void startTaskDispecer(void *argument)
 		}
 	}
 
-	osDelay(3000);
+	// osDelay(3000);
 	osThreadFlagsSet(TaskDigitalInHandle, flg_DIGITAL_REQUEST);
 
 
 	/* Infinite loop */
 	for (;;) {
-		rez = osThreadFlagsWait(flg_MAX, osFlagsWaitAny, osWaitForever);
+		uint32_t rez = osThreadFlagsWait(flg_MAX, osFlagsWaitAny, osWaitForever);
 		//		switch (rez) {
 		//			case osFlagsErrorTimeout:
 		//				// za sada nista
@@ -1103,8 +1094,6 @@ void startTaskRadioComms(void *argument)
 {
   /* USER CODE BEGIN startTaskRadioComms */
 	RadioMessage_t rmsg;
-	uint32_t cnt = 0;
-
 	const char rad_ready[] = 		"radio ready";
 	const char rad_txOn[] = 		"radio tx on";
 	const char rad_txOnIncplt[] = 	"radio tx will be done with incomplete measurements";
@@ -1112,6 +1101,7 @@ void startTaskRadioComms(void *argument)
 
 	osEventFlagsWait(EvtGlobalRunStopHandle, flg_RADIO_ENABLED, osFlagsWaitAll, osWaitForever);
 	INIT_RADIO();	// TODO timeout or error
+	osEventFlagsSet(EvtTaskHealthHandle, flg_RADIO_ENABLED);
 	tracePrint1s(qTraceHandle, dbg_3, rad_ready);
 
 	/* Infinite loop */
@@ -1153,9 +1143,6 @@ void startTaskID(void *argument)
 	const char dev_id_run[] = "device id running";
 	const char dev_id_is[] = "device id";
 
-	uint8_t id0 = 0;
-	uint8_t id1 = 0;
-	uint8_t id2 = 0;
 
 	osEventFlagsWait(EvtGlobalRunStopHandle, flg_devID_ENABLED, osFlagsWaitAll, osWaitForever);
 	// INIT_DEVICE_ID_INPUTS();	// TODO neki timeout
@@ -1165,55 +1152,14 @@ void startTaskID(void *argument)
 
 	/* Infinite loop */
 	for (;;) {
-		id0 = 0;
-		id1 = 0;
-		id2 = 0;
-		HAL_GPIO_WritePin(KBD_digit0_GPIO_Port, KBD_digit0_Pin, GPIO_PIN_SET);
-		HAL_GPIO_WritePin(KBD_digit1_GPIO_Port, KBD_digit1_Pin, GPIO_PIN_SET);
-		HAL_GPIO_WritePin(KBD_digit2_GPIO_Port, KBD_digit2_Pin, GPIO_PIN_SET);
-
-		// PRVA cifra
-		HAL_GPIO_WritePin(KBD_digit0_GPIO_Port, KBD_digit0_Pin, GPIO_PIN_RESET);
-		osDelay(20);
-		//i am  1 << (Exti_d2_Pin>>1)  zato sto gpio pinovi u hal-u idu od 1..32 a meni treba shiftofanje 0..31 puta
-		if (HAL_GPIO_ReadPin(KBD_i0_GPIO_Port, KBD_i0_Pin) == GPIO_PIN_SET) { id0 |= (1 << bit0); };
-		if (HAL_GPIO_ReadPin(KBD_i1_GPIO_Port, KBD_i1_Pin) == GPIO_PIN_SET) { id0 |= (1 << bit1); };
-		if (HAL_GPIO_ReadPin(KBD_i2_GPIO_Port, KBD_i2_Pin) == GPIO_PIN_SET) { id0 |= (1 << bit2); };
-		if (HAL_GPIO_ReadPin(KBD_i3_GPIO_Port, KBD_i3_Pin) == GPIO_PIN_SET) { id0 |= (1 << bit3); };
-
-		// DRUGA cifra
-		HAL_GPIO_WritePin(KBD_digit0_GPIO_Port, KBD_digit0_Pin, GPIO_PIN_SET);
-		HAL_GPIO_WritePin(KBD_digit1_GPIO_Port, KBD_digit1_Pin, GPIO_PIN_SET);
-		HAL_GPIO_WritePin(KBD_digit2_GPIO_Port, KBD_digit2_Pin, GPIO_PIN_SET);
-
-		HAL_GPIO_WritePin(KBD_digit1_GPIO_Port, KBD_digit1_Pin, GPIO_PIN_RESET);
-		osDelay(20);
-		//i am  1 << (Exti_d2_Pin>>1)  zato sto gpio pinovi u hal-u idu od 1..32 a meni treba shiftofanje 0..31 puta
-		if (HAL_GPIO_ReadPin(KBD_i0_GPIO_Port, KBD_i0_Pin) == GPIO_PIN_SET) { id1 |= (1 << bit0); };
-		if (HAL_GPIO_ReadPin(KBD_i1_GPIO_Port, KBD_i1_Pin) == GPIO_PIN_SET) { id1 |= (1 << bit1); };
-		if (HAL_GPIO_ReadPin(KBD_i2_GPIO_Port, KBD_i2_Pin) == GPIO_PIN_SET) { id1 |= (1 << bit2); };
-		if (HAL_GPIO_ReadPin(KBD_i3_GPIO_Port, KBD_i3_Pin) == GPIO_PIN_SET) { id1 |= (1 << bit3); };
-
-		// TRECA cifra
-		HAL_GPIO_WritePin(KBD_digit0_GPIO_Port, KBD_digit0_Pin, GPIO_PIN_SET);
-		HAL_GPIO_WritePin(KBD_digit1_GPIO_Port, KBD_digit1_Pin, GPIO_PIN_SET);
-		HAL_GPIO_WritePin(KBD_digit2_GPIO_Port, KBD_digit2_Pin, GPIO_PIN_SET);
-
-		HAL_GPIO_WritePin(KBD_digit2_GPIO_Port, KBD_digit2_Pin, GPIO_PIN_RESET);
-		osDelay(20);
-		//i am  1 << (Exti_d2_Pin>>1)  zato sto gpio pinovi u hal-u idu od 1..32 a meni treba shiftofanje 0..31 puta
-		if (HAL_GPIO_ReadPin(KBD_i0_GPIO_Port, KBD_i0_Pin) == GPIO_PIN_SET) { id2 |= (1 << bit0); };
-		if (HAL_GPIO_ReadPin(KBD_i1_GPIO_Port, KBD_i1_Pin) == GPIO_PIN_SET) { id2 |= (1 << bit1); };
-		if (HAL_GPIO_ReadPin(KBD_i2_GPIO_Port, KBD_i2_Pin) == GPIO_PIN_SET) { id2 |= (1 << bit2); };
-		if (HAL_GPIO_ReadPin(KBD_i3_GPIO_Port, KBD_i3_Pin) == GPIO_PIN_SET) { id2 |= (1 << bit3); };
-
-		setUID(id0, id1, id2);
+		INIT_DEVICE_ID();
+		DaqHw_t hw = getDaqHw();
 
 		char id0str[5],id1str[5],id2str[5];
-		BIN4_TO_STR(id0, id0str);
-		BIN4_TO_STR(id1, id1str);
-		BIN4_TO_STR(id2, id2str);
-		snprintf(tmsg.txt, sizeof(tmsg.txt), "%s (raw %d, %d, %d) (bin %s, %s, %s, dec %d) (bcd %d)", dev_id_is, id2, id1, id0, id2str, id1str,  id0str, getUID_bin(), getUID_bcd());
+		BIN4_TO_STR(hw.id0, id0str);
+		BIN4_TO_STR(hw.id0, id1str);
+		BIN4_TO_STR(hw.id2, id2str);
+		snprintf(tmsg.txt, sizeof(tmsg.txt), "%s (raw %d, %d, %d) (bin %s, %s, %s, dec %d) (bcd %d)", dev_id_is, hw.id2, hw.id1, hw.id0, id2str, id1str,  id0str, getUID_bin(), getUID_bcd());
 		tracePrint1s(qTraceHandle, dbg_3, tmsg.txt);
 
 		osDelay(20000);
